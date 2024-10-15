@@ -5,7 +5,6 @@
   "cordova": {
     "id": "cordova-plugin-sms-receiver",
     "platforms": [
-      "ios",
       "android"
     ]
   },
