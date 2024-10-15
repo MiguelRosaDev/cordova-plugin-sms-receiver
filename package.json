@@ -14,7 +14,10 @@
       "android"
     ]
   },
-  "repository": "rehy/cordova-plugin-sms-receiver",
+    "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MiguelRosaDev/cordova-plugin-sms-receiver.git"
+    },
   "keywords": [
     "cordova",
     "sms",
