@@ -9,7 +9,9 @@
     <keywords>cordova,phonegap,sms</keywords>
 
     <engines>
-        <engine name="cordova" version=">=3.0.0" />
+        <engine name="cordova" version=">=9.0.0"/>
+        <engine name="cordova-android" version=">=10.0.0"/>
+        <engine name="cordova-ios" version=">=5.0.0"/>
     </engines>
 
     <js-module name="SmsReceiver" src="www/SmsReceiver.js">
