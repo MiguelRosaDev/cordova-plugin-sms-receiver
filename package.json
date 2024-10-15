@@ -1,35 +1,38 @@
 {
-  "name": "cordova-plugin-sms-receiver",
-  "version": "0.1.6",
-  "description": "Cordova SMS Receiver Plugin",
-  "scripts": {
-    "clean": "rimraf www",
-    "build": "babel src/js --out-dir www",
-    "version": "sync-package-version --cordova-plugin",
-    "prepublish": "npm-run-all clean build"
-  },
+  "name": "Cordova-NOS.Utils-Plugin",
+  "version": "1.0",
+  "description": "Cordova plugin to get user app notification preference",
+  "types": "./types/index.d.ts",
   "cordova": {
-    "id": "cordova-plugin-sms-receiver",
+    "id": "com.cordova.plugin.NOSUtilsPlugin",
     "platforms": [
+      "ios",
       "android"
     ]
   },
-    "repository": {
+  "repository": {
     "type": "git",
-    "url": "git+https://github.com/MiguelRosaDev/cordova-plugin-sms-receiver.git"
-    },
-  "keywords": [
-    "cordova",
-    "sms",
-    "receiver",
-    "ecosystem:cordova",
-    "cordova-android",
-    "plugin"
-  ],
-  "author": {
-    "name": "Ratson"
+    "url": "git+https://github.com/MiguelRosaDev/Cordova-NOS-Utils-Plugin.git"
   },
   "license": "MIT",
+  "keywords": [
+    "cordova",
+    "review",
+    "review dialog",
+    "app review",
+    "inapp review",
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios"
+  ],
+  "scripts": {
+    "preversion": "npm run docs && rm -rf docs",
+    "version": "perl -i -pe 's/(version=)\"\\d+\\.\\d+\\.\\d+\"/$1\"'$npm_package_version'\"$2/' plugin.xml && git add .",
+    "postversion": "git push && git push --tags",
+    "predocs": "tsc www/* --declaration --allowJs --checkJs --lib es2015,dom --emitDeclarationOnly --outDir types",
+    "docs": "typedoc && perl -i -pe 's/README.md#/#/g' ./docs/README.md",
+    "postdocs": "perl -i -0pe 's/(<!-- TypedocGenerated -->).*/$1\n\n/gms' README.md && cat ./docs/README.md >> README.md"
+  },
   "devDependencies": {
     "typedoc": "^0.23.9",
     "typedoc-plugin-markdown": "^3.13.4"
