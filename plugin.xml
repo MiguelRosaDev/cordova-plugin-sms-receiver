@@ -39,7 +39,7 @@ xmlns:android="http://schemas.android.com/apk/res/android"
             <uses-permission android:name="android.permission.RECEIVE_SMS" />
         </config-file>
 
-        <source-file src="src/android/SmsReceiver.java" target-dir="src/ratson/cordova/sms_receiver" />
-        <source-file src="src/android/SmsReceiverPlugin.java" target-dir="src/ratson/cordova/sms_receiver" />
+        <source-file src="src/android/SmsReceiver.java" target-dir="src/cordova/sms_receiver" />
+        <source-file src="src/android/SmsReceiverPlugin.java" target-dir="src/cordova/sms_receiver" />
     </platform>
 </plugin>
