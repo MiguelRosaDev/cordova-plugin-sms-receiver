@@ -1,9 +1,9 @@
 {
-  "name": "plugin-sms-receiver",
+  "name": "plugin-smsreceiver",
   "version": "1.0",
   "types": "./types/index.d.ts",
   "cordova": {
-    "id": "cordova-plugin-sms-receiver",
+    "id": "cordova-plugin-smsreceiver",
     "platforms": [
       "android"
     ]
