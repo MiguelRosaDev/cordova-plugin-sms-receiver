@@ -28,6 +28,7 @@ xmlns:android="http://schemas.android.com/apk/res/android"
 
         <config-file parent="/*" target="AndroidManifest.xml">
             <uses-permission android:name="android.permission.RECEIVE_SMS" />
+            <uses-permission android:name="android.permission.READ_SMS" />
         </config-file>
 
         <source-file src="src/android/SmsReceiver.java" target-dir="src/cordova/sms_receiver" />
