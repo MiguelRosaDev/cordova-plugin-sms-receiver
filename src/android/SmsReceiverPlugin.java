@@ -2,6 +2,7 @@ package ratson.cordova.sms_receiver;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 
@@ -10,12 +11,12 @@ import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.os.Build;
 import com.google.android.gms.auth.api.phone.SmsRetriever;
 import com.google.android.gms.auth.api.phone.SmsRetrieverClient;
 import com.google.android.gms.tasks.Task;
-import com.google.android.gms.common.api.Status;
 
 public class SmsReceiverPlugin extends CordovaPlugin {
     private static final String ACTION_REQUEST_PERMISSION = "requestPermission";
@@ -26,6 +27,7 @@ public class SmsReceiverPlugin extends CordovaPlugin {
     private SmsReceiver smsReceiver = null;
     private boolean isReceiving = false;
     private int requestCode = 20160916;
+    private static final int SMS_CONSENT_REQUEST = 2;
 
     public SmsReceiverPlugin() {
         super();
@@ -59,27 +61,21 @@ public class SmsReceiverPlugin extends CordovaPlugin {
 
         this.isReceiving = false;
 
-        // 1. Stop the receiving context
-        PluginResult pluginResult = new PluginResult(
-                PluginResult.Status.NO_RESULT);
-        pluginResult.setKeepCallback(false);
-        this.callbackReceive.sendPluginResult(pluginResult);
-
-        // 2. Send result for the current context
-        pluginResult = new PluginResult(
-                PluginResult.Status.OK);
+        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK);
         callbackContext.sendPluginResult(pluginResult);
     }
 
     private void receiveSms(CallbackContext callbackContext) {
+        this.callbackReceive = callbackContext;
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startSmsRetriever(callbackContext);
+            startSmsUserConsent();
         } else {
-            startLegacySmsReceiver(callbackContext);
+            startLegacySmsReceiver();
         }
     }
 
-    private void startLegacySmsReceiver(CallbackContext callbackContext) {
+    private void startLegacySmsReceiver() {
         if (this.isReceiving) {
             PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
             pluginResult.setKeepCallback(false);
@@ -95,30 +91,26 @@ public class SmsReceiverPlugin extends CordovaPlugin {
             this.cordova.getActivity().registerReceiver(this.smsReceiver, fp);
         }
 
-        this.smsReceiver.startReceiving(callbackContext);
+        this.smsReceiver.startReceiving(this.callbackReceive);
 
         PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
         pluginResult.setKeepCallback(true);
-        callbackContext.sendPluginResult(pluginResult);
-        this.callbackReceive = callbackContext;
+        this.callbackReceive.sendPluginResult(pluginResult);
     }
 
-    private void startSmsRetriever(CallbackContext callbackContext) {
-        SmsRetrieverClient client = SmsRetriever.getClient(this.cordova.getActivity());
-        Task<Void> task = client.startSmsRetriever();
-
+    private void startSmsUserConsent() {
+        SmsRetrieverClient client = SmsRetriever.getClient(cordova.getActivity());
+        Task<Void> task = client.startSmsUserConsent(null);
+        
         task.addOnSuccessListener(aVoid -> {
-            // SmsRetriever iniciado com sucesso
-            PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "SmsRetriever iniciado");
-            pluginResult.setKeepCallback(true);
-            callbackContext.sendPluginResult(pluginResult);
-            this.callbackReceive = callbackContext;
+            PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
+            result.setKeepCallback(true);
+            callbackReceive.sendPluginResult(result);
         });
-
+        
         task.addOnFailureListener(e -> {
-            // Falha ao iniciar SmsRetriever
-            PluginResult pluginResult = new PluginResult(PluginResult.Status.ERROR, "Falha ao iniciar SmsRetriever");
-            callbackContext.sendPluginResult(pluginResult);
+            PluginResult result = new PluginResult(PluginResult.Status.ERROR, "Failed to start SMS user consent");
+            callbackReceive.sendPluginResult(result);
         });
     }
 
@@ -143,11 +135,25 @@ public class SmsReceiverPlugin extends CordovaPlugin {
     }
 
     @Override
-    protected void pluginInitialize() {
-        super.pluginInitialize();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            IntentFilter intentFilter = new IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION);
-            this.cordova.getActivity().registerReceiver(new SmsReceiver(), intentFilter);
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SMS_CONSENT_REQUEST) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                String message = data.getStringExtra(SmsRetriever.EXTRA_SMS_MESSAGE);
+                JSONObject jsonObj = new JSONObject();
+                try {
+                    jsonObj.put("messageBody", message);
+                    PluginResult result = new PluginResult(PluginResult.Status.OK, jsonObj);
+                    result.setKeepCallback(true);
+                    callbackReceive.sendPluginResult(result);
+                } catch (JSONException e) {
+                    PluginResult result = new PluginResult(PluginResult.Status.ERROR, "Error parsing SMS message");
+                    callbackReceive.sendPluginResult(result);
+                }
+            } else {
+                PluginResult result = new PluginResult(PluginResult.Status.ERROR, "User denied SMS consent");
+                callbackReceive.sendPluginResult(result);
+            }
         }
     }
 }
