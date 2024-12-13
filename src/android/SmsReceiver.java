@@ -12,21 +12,12 @@ import org.json.JSONObject;
 import android.os.Build;
 
 import com.google.android.gms.auth.api.phone.SmsRetriever;
-import com.google.android.gms.auth.api.phone.SmsRetrieverClient;
-import com.google.android.gms.tasks.Task;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.common.api.CommonStatusCodes;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class SmsReceiver extends BroadcastReceiver {
     public static final String SMS_EXTRA_NAME = "pdus";
     private CallbackContext callbackReceive;
     private boolean isReceiving = true;
-
-    // This broadcast boolean is used to continue or not the message broadcast
-    // to the other BroadcastReceivers waiting for an incoming SMS (like the native SMS app)
     private boolean broadcast = false;
 
     @Override
@@ -35,33 +26,29 @@ public class SmsReceiver extends BroadcastReceiver {
             if (SmsRetriever.SMS_RETRIEVED_ACTION.equals(intent.getAction())) {
                 Bundle extras = intent.getExtras();
                 Status status = (Status) extras.get(SmsRetriever.EXTRA_STATUS);
-                switch (status.getStatusCode()) {
-                    case CommonStatusCodes.SUCCESS:
-                        String message = (String) extras.get(SmsRetriever.EXTRA_SMS_MESSAGE);
-                        String otpCode = extractOtpFromMessage(message);
-                        sendResult(message, otpCode);
-                        break;
-                    case CommonStatusCodes.TIMEOUT:
-                        sendError("Timeout: SMS não recebido");
-                        break;
+                if (status.getStatusCode() == CommonStatusCodes.SUCCESS) {
+                    Intent consentIntent = extras.getParcelable(SmsRetriever.EXTRA_CONSENT_INTENT);
+                    if (consentIntent != null) {
+                        try {
+                            ((Activity) context).startActivityForResult(consentIntent, SmsReceiverPlugin.SMS_CONSENT_REQUEST);
+                        } catch (Exception e) {
+                            sendError("Error starting SMS consent intent: " + e.getMessage());
+                        }
+                    }
                 }
             }
         } else {
-            //Android 14 and bellow
-            // Get the SMS map from Intent
             Bundle extras = intent.getExtras();
             if (extras != null) {
-                // Get received SMS Array
                 Object[] smsExtra = (Object[]) extras.get(SMS_EXTRA_NAME);
 
                 for (int i = 0; i < smsExtra.length; i++) {
                     SmsMessage sms = SmsMessage.createFromPdu((byte[]) smsExtra[i]);
                     if (this.isReceiving && this.callbackReceive != null) {
-                        sendResult(sms.getMessageBody(), extractOtpFromMessage(sms.getMessageBody()));
+                        sendResult(sms.getMessageBody(), sms.getOriginatingAddress());
                     }
                 }
 
-                // If the plugin is active and we don't want to broadcast to other receivers
                 if (this.isReceiving && !broadcast) {
                     this.abortBroadcast();
                 }
@@ -69,12 +56,12 @@ public class SmsReceiver extends BroadcastReceiver {
         }
     }
 
-    private void sendResult(String messageBody, String otpCode) {
+    private void sendResult(String messageBody, String originatingAddress) {
         if (this.callbackReceive != null) {
             JSONObject jsonObj = new JSONObject();
             try {
                 jsonObj.put("messageBody", messageBody);
-                jsonObj.put("otpCode", otpCode);
+                jsonObj.put("originatingAddress", originatingAddress);
             } catch (Exception e) {
                 System.out.println("Error: " + e);
             }
@@ -90,16 +77,6 @@ public class SmsReceiver extends BroadcastReceiver {
             result.setKeepCallback(true);
             this.callbackReceive.sendPluginResult(result);
         }
-    }
-
-    private String extractOtpFromMessage(String message) {
-        // Extraia o código OTP usando regex (personalize conforme necessário)
-        Pattern otpPattern = Pattern.compile("\\b\\d{6}\\b"); // Captura 6 dígitos
-        Matcher matcher = otpPattern.matcher(message);
-        if (matcher.find()) {
-            return matcher.group();
-        }
-        return null;
     }
 
     public void broadcast(boolean v) {
