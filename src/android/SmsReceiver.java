@@ -30,25 +30,20 @@ public class SmsReceiver extends BroadcastReceiver {
     private boolean broadcast = false;
 
     @Override
-    public void onReceive(Context ctx, Intent intent) {
+    public void onReceive(Context context, Intent intent) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             if (SmsRetriever.SMS_RETRIEVED_ACTION.equals(intent.getAction())) {
                 Bundle extras = intent.getExtras();
                 Status status = (Status) extras.get(SmsRetriever.EXTRA_STATUS);
-                if (status.getStatusCode() == CommonStatusCodes.SUCCESS) {
-                    String message = extras.getString(SmsRetriever.EXTRA_SMS_MESSAGE);
-                    String otpCode = extractOtpFromMessage(message);
-
-                    JSONObject jsonObj = new JSONObject();
-                    try {
-                        jsonObj.put("otpCode", otpCode);
-                        jsonObj.put("messageBody", message);
-                    } catch (Exception e) {
-                        System.out.println("Error: " + e);
-                    }
-                    PluginResult result = new PluginResult(PluginResult.Status.OK, jsonObj);
-                    result.setKeepCallback(true);
-                    callbackReceive.sendPluginResult(result);
+                switch (status.getStatusCode()) {
+                    case CommonStatusCodes.SUCCESS:
+                        String message = (String) extras.get(SmsRetriever.EXTRA_SMS_MESSAGE);
+                        String otpCode = extractOtpFromMessage(message);
+                        sendResult(message, otpCode);
+                        break;
+                    case CommonStatusCodes.TIMEOUT:
+                        sendError("Timeout: SMS não recebido");
+                        break;
                 }
             }
         } else {
@@ -62,16 +57,7 @@ public class SmsReceiver extends BroadcastReceiver {
                 for (int i = 0; i < smsExtra.length; i++) {
                     SmsMessage sms = SmsMessage.createFromPdu((byte[]) smsExtra[i]);
                     if (this.isReceiving && this.callbackReceive != null) {
-                        JSONObject jsonObj = new JSONObject();
-                        try {
-                            jsonObj.put("messageBody", sms.getMessageBody());
-                            jsonObj.put("originatingAddress", sms.getOriginatingAddress());
-                        } catch (Exception e) {
-                            System.out.println("Error: " + e);
-                        }
-                        PluginResult result = new PluginResult(PluginResult.Status.OK, jsonObj);
-                        result.setKeepCallback(true);
-                        callbackReceive.sendPluginResult(result);
+                        sendResult(sms.getMessageBody(), extractOtpFromMessage(sms.getMessageBody()));
                     }
                 }
 
@@ -80,6 +66,29 @@ public class SmsReceiver extends BroadcastReceiver {
                     this.abortBroadcast();
                 }
             }
+        }
+    }
+
+    private void sendResult(String messageBody, String otpCode) {
+        if (this.callbackReceive != null) {
+            JSONObject jsonObj = new JSONObject();
+            try {
+                jsonObj.put("messageBody", messageBody);
+                jsonObj.put("otpCode", otpCode);
+            } catch (Exception e) {
+                System.out.println("Error: " + e);
+            }
+            PluginResult result = new PluginResult(PluginResult.Status.OK, jsonObj);
+            result.setKeepCallback(true);
+            this.callbackReceive.sendPluginResult(result);
+        }
+    }
+
+    private void sendError(String errorMessage) {
+        if (this.callbackReceive != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.ERROR, errorMessage);
+            result.setKeepCallback(true);
+            this.callbackReceive.sendPluginResult(result);
         }
     }
 
