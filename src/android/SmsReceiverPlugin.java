@@ -11,6 +11,8 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import android.os.Build;
+
 public class SmsReceiverPlugin extends CordovaPlugin {
     private static final String ACTION_REQUEST_PERMISSION = "requestPermission";
     public final String ACTION_HAS_SMS_POSSIBILITY = "hasSMSPossibility";
