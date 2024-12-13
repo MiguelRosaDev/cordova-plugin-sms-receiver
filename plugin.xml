@@ -31,6 +31,17 @@ xmlns:android="http://schemas.android.com/apk/res/android"
             <uses-permission android:name="android.permission.READ_SMS" />
         </config-file>
 
+        <config-file target="AndroidManifest.xml" parent="application">
+        <receiver
+            android:name="ratson.cordova.sms_receiver.SmsReceiver"
+            android:permission="com.google.android.gms.auth.api.phone.permission.SEND"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.auth.api.phone.SMS_RETRIEVED" />
+            </intent-filter>
+        </receiver>
+        </config-file>
+
         <framework src="src/android/build.gradle" custom="true" type="gradleReference" />
            
         <source-file src="src/android/SmsReceiver.java" target-dir="src/cordova/sms_receiver" />
