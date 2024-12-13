@@ -83,7 +83,7 @@ public class SmsReceiver extends BroadcastReceiver {
 
     private String extractOtpFromMessage(String message) {
         // Extraia o código OTP usando regex (personalize conforme necessário)
-        Pattern otpPattern = Pattern.compile("\\b\\d{4,8}\\b"); // Captura 6 dígitos
+        Pattern otpPattern = Pattern.compile("\\b\\d{6}\\b"); // Captura 6 dígitos
         Matcher matcher = otpPattern.matcher(message);
         if (matcher.find()) {
             return matcher.group();
