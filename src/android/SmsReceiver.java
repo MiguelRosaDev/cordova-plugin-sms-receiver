@@ -11,6 +11,12 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONObject;
 import android.os.Build;
 
+import com.google.android.gms.auth.api.phone.SmsRetriever;
+import com.google.android.gms.auth.api.phone.SmsRetrieverClient;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.common.api.CommonStatusCodes;
+
 public class SmsReceiver extends BroadcastReceiver {
     public static final String SMS_EXTRA_NAME = "pdus";
     private CallbackContext callbackReceive;
