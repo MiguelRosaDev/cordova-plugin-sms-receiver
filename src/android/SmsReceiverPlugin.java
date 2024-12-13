@@ -68,36 +68,51 @@ public class SmsReceiverPlugin extends CordovaPlugin {
     }
 
     private void receiveSms(CallbackContext callbackContext) {
-        // if already receiving (this case can happen if the startReception is called
-        // several times
-        if (this.isReceiving) {
-            // close the already opened callback ...
-            PluginResult pluginResult = new PluginResult(
-                    PluginResult.Status.NO_RESULT);
-            pluginResult.setKeepCallback(false);
-            this.callbackReceive.sendPluginResult(pluginResult);
-
-            // ... before registering a new one to the sms receiver
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startSmsRetriever(callbackContext);
+        } else {
+            // Android 14 e abaixo: Continue com interceptação direta
+            if (this.isReceiving) {
+                PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
+                pluginResult.setKeepCallback(false);
+                this.callbackReceive.sendPluginResult(pluginResult);
+            }
+    
+            this.isReceiving = true;
+    
+            if (this.smsReceiver == null) {
+                this.smsReceiver = new SmsReceiver();
+                IntentFilter fp = new IntentFilter("android.provider.Telephony.SMS_RECEIVED");
+                fp.setPriority(1000);
+                this.cordova.getActivity().registerReceiver(this.smsReceiver, fp);
+            }
+    
+            this.smsReceiver.startReceiving(callbackContext);
+    
+            PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
+            pluginResult.setKeepCallback(true);
+            callbackContext.sendPluginResult(pluginResult);
+            this.callbackReceive = callbackContext;
         }
-        this.isReceiving = true;
-
-        if (this.smsReceiver == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            this.smsReceiver = new SmsReceiver();
-            IntentFilter fp = new IntentFilter("android.provider.Telephony.SMS_RECEIVED");
-            fp.setPriority(1000);
-            // fp.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
-            this.cordova.getActivity().registerReceiver(this.smsReceiver, fp);
-        }
-
-        this.smsReceiver.startReceiving(callbackContext);
-
-        PluginResult pluginResult = new PluginResult(
-                PluginResult.Status.NO_RESULT);
-        pluginResult.setKeepCallback(true);
-        callbackContext.sendPluginResult(pluginResult);
-        this.callbackReceive = callbackContext;
     }
 
+    private void startSmsRetriever(CallbackContext callbackContext) {
+        SmsRetrieverClient client = SmsRetriever.getClient(this.cordova.getContext());
+        Task<Void> task = client.startSmsRetriever();
+    
+        task.addOnSuccessListener(aVoid -> {
+            // SmsRetriever iniciado com sucesso
+            PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "SmsRetriever iniciado");
+            callbackContext.sendPluginResult(pluginResult);
+        });
+    
+        task.addOnFailureListener(e -> {
+            // Falha ao iniciar SmsRetriever
+            PluginResult pluginResult = new PluginResult(PluginResult.Status.ERROR, "Falha ao iniciar SmsRetriever");
+            callbackContext.sendPluginResult(pluginResult);
+        });
+    }
+    
     private void hasSmsPossibility(CallbackContext callbackContext) {
         Activity ctx = this.cordova.getActivity();
         if (ctx.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
