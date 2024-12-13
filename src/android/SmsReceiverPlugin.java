@@ -12,6 +12,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import android.os.Build;
+import com.google.android.gms.auth.api.phone.SmsRetriever;
+import com.google.android.gms.auth.api.phone.SmsRetrieverClient;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.common.api.Status;
 
 public class SmsReceiverPlugin extends CordovaPlugin {
     private static final String ACTION_REQUEST_PERMISSION = "requestPermission";
