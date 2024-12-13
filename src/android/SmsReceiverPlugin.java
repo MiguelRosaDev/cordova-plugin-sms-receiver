@@ -79,7 +79,7 @@ public class SmsReceiverPlugin extends CordovaPlugin {
         }
         this.isReceiving = true;
 
-        if (this.smsReceiver == null) {
+        if (this.smsReceiver == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             this.smsReceiver = new SmsReceiver();
             IntentFilter fp = new IntentFilter("android.provider.Telephony.SMS_RECEIVED");
             fp.setPriority(1000);
