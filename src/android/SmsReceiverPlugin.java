@@ -75,39 +75,44 @@ public class SmsReceiverPlugin extends CordovaPlugin {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startSmsRetriever(callbackContext);
         } else {
-            // Android 14 e abaixo: Continue com interceptação direta
-            if (this.isReceiving) {
-                PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
-                pluginResult.setKeepCallback(false);
-                this.callbackReceive.sendPluginResult(pluginResult);
-            }
-
-            this.isReceiving = true;
-
-            if (this.smsReceiver == null) {
-                this.smsReceiver = new SmsReceiver();
-                IntentFilter fp = new IntentFilter("android.provider.Telephony.SMS_RECEIVED");
-                fp.setPriority(1000);
-                this.cordova.getActivity().registerReceiver(this.smsReceiver, fp);
-            }
-
-            this.smsReceiver.startReceiving(callbackContext);
-
-            PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
-            pluginResult.setKeepCallback(true);
-            callbackContext.sendPluginResult(pluginResult);
-            this.callbackReceive = callbackContext;
+            startLegacySmsReceiver(callbackContext);
         }
     }
 
+    private void startLegacySmsReceiver(CallbackContext callbackContext) {
+        if (this.isReceiving) {
+            PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
+            pluginResult.setKeepCallback(false);
+            this.callbackReceive.sendPluginResult(pluginResult);
+        }
+
+        this.isReceiving = true;
+
+        if (this.smsReceiver == null) {
+            this.smsReceiver = new SmsReceiver();
+            IntentFilter fp = new IntentFilter("android.provider.Telephony.SMS_RECEIVED");
+            fp.setPriority(1000);
+            this.cordova.getActivity().registerReceiver(this.smsReceiver, fp);
+        }
+
+        this.smsReceiver.startReceiving(callbackContext);
+
+        PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
+        pluginResult.setKeepCallback(true);
+        callbackContext.sendPluginResult(pluginResult);
+        this.callbackReceive = callbackContext;
+    }
+
     private void startSmsRetriever(CallbackContext callbackContext) {
-        SmsRetrieverClient client = SmsRetriever.getClient(this.cordova.getContext());
+        SmsRetrieverClient client = SmsRetriever.getClient(this.cordova.getActivity());
         Task<Void> task = client.startSmsRetriever();
 
         task.addOnSuccessListener(aVoid -> {
             // SmsRetriever iniciado com sucesso
             PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "SmsRetriever iniciado");
+            pluginResult.setKeepCallback(true);
             callbackContext.sendPluginResult(pluginResult);
+            this.callbackReceive = callbackContext;
         });
 
         task.addOnFailureListener(e -> {
@@ -135,6 +140,15 @@ public class SmsReceiverPlugin extends CordovaPlugin {
             this.cordova.requestPermission(this, requestCode, type);
         }
         callbackContext.success();
+    }
+
+    @Override
+    protected void pluginInitialize() {
+        super.pluginInitialize();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            IntentFilter intentFilter = new IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION);
+            this.cordova.getActivity().registerReceiver(new SmsReceiver(), intentFilter);
+        }
     }
 }
 
