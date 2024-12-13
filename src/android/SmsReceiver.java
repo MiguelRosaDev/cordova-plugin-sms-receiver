@@ -13,6 +13,7 @@ import android.os.Build;
 
 import com.google.android.gms.auth.api.phone.SmsRetriever;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.common.api.CommonStatusCodes;
 
 public class SmsReceiver extends BroadcastReceiver {
     public static final String SMS_EXTRA_NAME = "pdus";
