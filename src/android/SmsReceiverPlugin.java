@@ -81,18 +81,18 @@ public class SmsReceiverPlugin extends CordovaPlugin {
                 pluginResult.setKeepCallback(false);
                 this.callbackReceive.sendPluginResult(pluginResult);
             }
-    
+
             this.isReceiving = true;
-    
+
             if (this.smsReceiver == null) {
                 this.smsReceiver = new SmsReceiver();
                 IntentFilter fp = new IntentFilter("android.provider.Telephony.SMS_RECEIVED");
                 fp.setPriority(1000);
                 this.cordova.getActivity().registerReceiver(this.smsReceiver, fp);
             }
-    
+
             this.smsReceiver.startReceiving(callbackContext);
-    
+
             PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
             pluginResult.setKeepCallback(true);
             callbackContext.sendPluginResult(pluginResult);
@@ -103,20 +103,20 @@ public class SmsReceiverPlugin extends CordovaPlugin {
     private void startSmsRetriever(CallbackContext callbackContext) {
         SmsRetrieverClient client = SmsRetriever.getClient(this.cordova.getContext());
         Task<Void> task = client.startSmsRetriever();
-    
+
         task.addOnSuccessListener(aVoid -> {
             // SmsRetriever iniciado com sucesso
             PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "SmsRetriever iniciado");
             callbackContext.sendPluginResult(pluginResult);
         });
-    
+
         task.addOnFailureListener(e -> {
             // Falha ao iniciar SmsRetriever
             PluginResult pluginResult = new PluginResult(PluginResult.Status.ERROR, "Falha ao iniciar SmsRetriever");
             callbackContext.sendPluginResult(pluginResult);
         });
     }
-    
+
     private void hasSmsPossibility(CallbackContext callbackContext) {
         Activity ctx = this.cordova.getActivity();
         if (ctx.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
@@ -137,3 +137,4 @@ public class SmsReceiverPlugin extends CordovaPlugin {
         callbackContext.success();
     }
 }
+
