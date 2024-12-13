@@ -31,27 +31,26 @@ public class SmsReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context ctx, Intent intent) {
-        //Android 15
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             if (SmsRetriever.SMS_RETRIEVED_ACTION.equals(intent.getAction())) {
-            Bundle extras = intent.getExtras();
-            Status status = (Status) extras.get(SmsRetriever.EXTRA_STATUS);
-            if (status.getStatusCode() == CommonStatusCodes.SUCCESS) {
-                String message = extras.getString(SmsRetriever.EXTRA_SMS_MESSAGE);
-                String otpCode = extractOtpFromMessage(message);
+                Bundle extras = intent.getExtras();
+                Status status = (Status) extras.get(SmsRetriever.EXTRA_STATUS);
+                if (status.getStatusCode() == CommonStatusCodes.SUCCESS) {
+                    String message = extras.getString(SmsRetriever.EXTRA_SMS_MESSAGE);
+                    String otpCode = extractOtpFromMessage(message);
 
-                JSONObject jsonObj = new JSONObject();
-                try {
-                    jsonObj.put("otpCode", otpCode);
-                    jsonObj.put("messageBody", message);
-                } catch (Exception e) {
-                    System.out.println("Error: " + e);
+                    JSONObject jsonObj = new JSONObject();
+                    try {
+                        jsonObj.put("otpCode", otpCode);
+                        jsonObj.put("messageBody", message);
+                    } catch (Exception e) {
+                        System.out.println("Error: " + e);
+                    }
+                    PluginResult result = new PluginResult(PluginResult.Status.OK, jsonObj);
+                    result.setKeepCallback(true);
+                    callbackReceive.sendPluginResult(result);
                 }
-                PluginResult result = new PluginResult(PluginResult.Status.OK, jsonObj);
-                result.setKeepCallback(true);
-                callbackReceive.sendPluginResult(result);
             }
-        }
         } else {
             //Android 14 and bellow
             // Get the SMS map from Intent
@@ -59,7 +58,7 @@ public class SmsReceiver extends BroadcastReceiver {
             if (extras != null) {
                 // Get received SMS Array
                 Object[] smsExtra = (Object[]) extras.get(SMS_EXTRA_NAME);
-    
+
                 for (int i = 0; i < smsExtra.length; i++) {
                     SmsMessage sms = SmsMessage.createFromPdu((byte[]) smsExtra[i]);
                     if (this.isReceiving && this.callbackReceive != null) {
@@ -75,7 +74,7 @@ public class SmsReceiver extends BroadcastReceiver {
                         callbackReceive.sendPluginResult(result);
                     }
                 }
-    
+
                 // If the plugin is active and we don't want to broadcast to other receivers
                 if (this.isReceiving && !broadcast) {
                     this.abortBroadcast();
@@ -108,3 +107,4 @@ public class SmsReceiver extends BroadcastReceiver {
         this.isReceiving = false;
     }
 }
+
