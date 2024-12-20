@@ -31,7 +31,7 @@ public class SmsReceiver extends BroadcastReceiver {
                     Intent consentIntent = extras.getParcelable(SmsRetriever.EXTRA_CONSENT_INTENT);
                     if (consentIntent != null) {
                         try {
-                            ((this.cordova.getActivity()) context).startActivityForResult(consentIntent, SmsReceiverPlugin.SMS_CONSENT_REQUEST);
+                            context.startActivityForResult(consentIntent, SmsReceiverPlugin.SMS_CONSENT_REQUEST);
                         } catch (Exception e) {
                             sendError("Error starting SMS consent intent: " + e.getMessage());
                         }
