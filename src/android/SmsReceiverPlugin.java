@@ -27,7 +27,7 @@ public class SmsReceiverPlugin extends CordovaPlugin {
     private SmsReceiver smsReceiver = null;
     private boolean isReceiving = false;
     private int requestCode = 20160916;
-    private static final int SMS_CONSENT_REQUEST = 2;
+    public static final int SMS_CONSENT_REQUEST = 2;
 
     public SmsReceiverPlugin() {
         super();
