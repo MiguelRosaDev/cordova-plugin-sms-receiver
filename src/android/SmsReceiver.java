@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
+import android.app.PendingIntent;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
@@ -20,6 +21,11 @@ public class SmsReceiver extends BroadcastReceiver {
     private CallbackContext callbackReceive;
     private boolean isReceiving = true;
     private boolean broadcast = false;
+    private SmsReceiverPlugin plugin;
+
+    public SmsReceiver(SmsReceiverPlugin plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -28,10 +34,10 @@ public class SmsReceiver extends BroadcastReceiver {
                 Bundle extras = intent.getExtras();
                 Status status = (Status) extras.get(SmsRetriever.EXTRA_STATUS);
                 if (status.getStatusCode() == CommonStatusCodes.SUCCESS) {
-                    Intent consentIntent = extras.getParcelable(SmsRetriever.EXTRA_CONSENT_INTENT);
+                    PendingIntent consentIntent = extras.getParcelable(SmsRetriever.EXTRA_CONSENT_INTENT);
                     if (consentIntent != null) {
                         try {
-                            context.startActivityForResult(consentIntent, SmsReceiverPlugin.SMS_CONSENT_REQUEST);
+                            plugin.startSmsUserConsentIntent(consentIntent);
                         } catch (Exception e) {
                             sendError("Error starting SMS consent intent: " + e.getMessage());
                         }
