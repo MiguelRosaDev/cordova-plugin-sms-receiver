@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.app.PendingIntent;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -85,7 +86,7 @@ public class SmsReceiverPlugin extends CordovaPlugin {
         this.isReceiving = true;
 
         if (this.smsReceiver == null) {
-            this.smsReceiver = new SmsReceiver();
+            this.smsReceiver = new SmsReceiver(this);
             IntentFilter fp = new IntentFilter("android.provider.Telephony.SMS_RECEIVED");
             fp.setPriority(1000);
             this.cordova.getActivity().registerReceiver(this.smsReceiver, fp);
@@ -112,6 +113,15 @@ public class SmsReceiverPlugin extends CordovaPlugin {
             PluginResult result = new PluginResult(PluginResult.Status.ERROR, "Failed to start SMS user consent");
             callbackReceive.sendPluginResult(result);
         });
+    }
+
+    public void startSmsUserConsentIntent(PendingIntent consentIntent) {
+        try {
+            cordova.getActivity().startIntentSenderForResult(consentIntent.getIntentSender(), SMS_CONSENT_REQUEST, null, 0, 0, 0);
+        } catch (Exception e) {
+            PluginResult result = new PluginResult(PluginResult.Status.ERROR, "Error starting SMS consent intent: " + e.getMessage());
+            callbackReceive.sendPluginResult(result);
+        }
     }
 
     private void hasSmsPossibility(CallbackContext callbackContext) {
